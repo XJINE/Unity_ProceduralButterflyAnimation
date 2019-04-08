@@ -7,6 +7,7 @@
         _Speed   ("Speed",   Range(0, 15)) = 5
         _Flap    ("(FrapAngleMin, FrapAngleMax, FlapBendMin, FlapBendMax)", Vector) = (-80, 60, 0, 10)
         _ZBend   ("(ZBendForward, ZBendBackwardMin, ZBendBackwardMax)", Vector) = (5, 0, 10, 0)
+        _Updown  ("Updaown", Range(0, 10)) = 1
         _Tilt    ("(TiltForward, TiltBackward, TiltWhole)", Vector) = (40, 10, 20, 0)
     }
 
@@ -50,21 +51,24 @@
             float  _Speed;
             float4 _Flap;
             float4 _ZBend;
+            float  _Updown;
             float4 _Tilt;
 
             v2f vert (appdata v)
             {
                 v2f o;
 
-                float time = _Time.y * _Speed;
-                float noiseX = cnoise(time);
+                float noiseT = cnoise(_Time.y);
+                float noiseA = abs(noiseT);
+                float noiseB = abs(cnoise(-_Time.y));
+                float time   = _Time.y * _Speed + noiseT * 0.5;
 
                 float flapAngle = lerp(_Flap.x, _Flap.y, abs(sin(time)));
 
                 float angle = flapAngle
                             + (v.vertex.z < 0 || flapAngle < -60 ?
                             0 : lerp(_Flap.z, _Flap.w, pow(abs(v.vertex.x) / 5, 2)) * sin(time * 2 + 1.2));
-                      angle *= v.vertex.x < 0 ? -1 : 1;
+                      angle *= v.vertex.x < 0 ? -(1 + noiseA) : (1 + noiseB);
 
                 // Flapping (X-Waving)
 
@@ -73,15 +77,12 @@
                 // Z-Waving
 
                 float zBendAngleForward  = _ZBend.x * sin((v.vertex.z + time * 4) * 0.5);
+                                         + v.vertex.x < 0 ? noiseA : noiseB;
                 float zBendAngleBackward = lerp(_ZBend.y, _ZBend.z, pow(abs(v.vertex.z) / 5, 2)) * abs(sin(_Time.y));
-
+                                         + v.vertex.x < 0 ? noiseA : noiseB;
                 v.vertex.xyz = (v.vertex.z < 0) ?
                                 mul(v.vertex.xyz, RotationMatrixX(DegreeToRadian(zBendAngleBackward))):
                                 mul(v.vertex.xyz, RotationMatrixX(DegreeToRadian(zBendAngleForward)));
-
-                // Updown
-                
-                v.vertex.y += sin(time * -2);
 
                 // Rotation
 
@@ -91,7 +92,12 @@
                 angle = DegreeToRadian(_Tilt.z) * abs(sin(time));
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixX(angle));
 
+                // Updown
+
+                v.vertex.y += sin(time * -2) * (_Updown + noiseA);
+
                 // Noisy Move & Rotatoin.
+
                 v.vertex.x += sin(_Time.y);
                 v.vertex.z += cos(_Time.w);
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixY(DegreeToRadian(10 * sin(_Time.y) * cos(_Time.w))));
@@ -105,6 +111,9 @@
 
             fixed4 frag (v2f i) : SV_Target
             {
+                //float noise = abs(sin(cnoise(i.uv + _Time.y / 10)));
+                //return fixed4(noise,0,0,1);
+                
                 i.uv.y *= -1;
 
                 fixed4 color = tex2D(_MainTex, i.uv) * _Color;
