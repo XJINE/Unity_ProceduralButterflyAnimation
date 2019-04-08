@@ -54,19 +54,23 @@
                       angle *= v.vertex.x < 0 ? -1 : 1;
 
                 // Flapping (X-Waving)
+
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixZ(DegreeToRadian(angle)));
 
                 // Z-Waving
+
                 v.vertex.xyz = v.vertex.z < 0 ?
                                 v.vertex.xyz:
                                 mul(v.vertex.xyz, RotationMatrixX(DegreeToRadian(5 * sin((v.vertex.z + time * 4) * 0.5))));
 
-                // Updown
-                v.vertex.y += sin(time * -2);
-
                 // Rotation
+
                 angle = DegreeToRadian(40) * abs(sin(time));
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixX(angle));
+
+                // Updown
+
+                v.vertex.y += sin(time * -2);
 
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv     = TRANSFORM_TEX(v.uv, _MainTex);

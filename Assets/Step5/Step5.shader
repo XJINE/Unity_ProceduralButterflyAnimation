@@ -56,24 +56,29 @@
                       angle *= v.vertex.x < 0 ? -1 : 1;
 
                 // Flapping (X-Waving)
+
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixZ(DegreeToRadian(angle)));
 
                 // Z-Waving
+
                 v.vertex.xyz = (v.vertex.z < 0) ?
                                 mul(v.vertex.xyz, RotationMatrixX(DegreeToRadian(lerp(0, 10, pow(abs(v.vertex.z) / 5, 2)) * abs(sin(_Time.y))))):
                                 mul(v.vertex.xyz, RotationMatrixX(DegreeToRadian(5 * sin((v.vertex.z + time * 4) * 0.5))));
 
-                // Updown
-                v.vertex.y += sin(time * -2);
-
                 // Rotation
+
                 angle = DegreeToRadian(v.vertex.z < 0.2 ? 10 : 40) * abs(sin(time));
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixX(angle));
 
                 angle = DegreeToRadian(20) * abs(sin(time));
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixX(angle));
 
+                // Updown
+ 
+                v.vertex.y += sin(time * -2);
+
                 // Noisy Move & Rotatoin.
+
                 v.vertex.x += sin(_Time.y);
                 v.vertex.z += cos(_Time.w);
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixY(DegreeToRadian(10 * sin(_Time.y) * cos(_Time.w))));
