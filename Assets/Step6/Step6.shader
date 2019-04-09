@@ -4,11 +4,11 @@
     {
         _Color   ("Color",   Color) = (1, 1, 1, 1)
         _MainTex ("Texture", 2D) = "white" {}
-        _Speed   ("Speed",   Range(0, 15)) = 5
+        _Speed   ("(BaseSpeed, RandomShiftSpeed, RandomBias, -, -)", Vector) = (5, 0.5, 2, 0)
         _Flap    ("(FrapAngleMin, FrapAngleMax, FlapBendMin, FlapBendMax)", Vector) = (-80, 60, 0, 10)
-        _ZBend   ("(ZBendForward, ZBendBackwardMin, ZBendBackwardMax)", Vector) = (5, 0, 10, 0)
+        _ZBend   ("(ZBendForward, ZBendBackwardMin, ZBendBackwardMax, -)", Vector) = (5, 0, 10, 0)
         _Updown  ("Updaown", Range(0, 10)) = 1
-        _Tilt    ("(TiltForward, TiltBackward, TiltWhole)", Vector) = (40, 10, 20, 0)
+        _Tilt    ("(TiltForward, TiltBackward, TiltWhole, -)", Vector) = (40, 10, 20, 0)
     }
 
     SubShader
@@ -48,7 +48,7 @@
             float4    _MainTex_ST;
             float4    _Color;
 
-            float  _Speed;
+            float4 _Speed;
             float4 _Flap;
             float4 _ZBend;
             float  _Updown;
@@ -58,10 +58,11 @@
             {
                 v2f o;
 
-                float noiseT = cnoise(_Time.y);
-                float noiseA = abs(noiseT);
+                float noiseT = cnoise(_Time.y * _Speed.y);
+                float noiseA = abs(cnoise(_Time.y));
                 float noiseB = abs(cnoise(-_Time.y));
-                float time   = _Time.y * _Speed + noiseT * 0.5;
+
+                float time = _Time.y * _Speed.x + (noiseT * noiseT) * _Speed.z;
 
                 float flapAngle = lerp(_Flap.x, _Flap.y, abs(sin(time)));
 
@@ -89,7 +90,7 @@
                 angle = DegreeToRadian(v.vertex.z < 0.2 ? _Tilt.y : _Tilt.x) * abs(sin(time));
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixX(angle));
 
-                angle = DegreeToRadian(_Tilt.z) * abs(sin(time));
+                angle = DegreeToRadian(_Tilt.z + noiseA * 5) * abs(sin(time));
                 v.vertex.xyz = mul(v.vertex.xyz, RotationMatrixX(angle));
 
                 // Updown
